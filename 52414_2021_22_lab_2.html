@@ -371,33 +371,10 @@ pre code {
 
 <div id="lab-2-text-analysis-sampling-and-inference" class="section level1">
 <h1><em>Lab 2: Text analysis, Sampling and inference</em></h1>
-<p><br /><br /></p>
-<div id="submission-instructions" class="section level3">
-<h3>Submission Instructions</h3>
-<p>This lab will be submitted in pairs using GitHub (if you don’t have a
-pair, please contact us).<br />
-Please follow the steps in the <a href="https://classroom.github.com/a/F5YH9Lxr">GitHub-Classroom Lab
-2</a> to create your group’s Lab 2 repository.<br />
-<strong>Important: your team’s name must be
-<code>FamilyName1_Name1_and_FamilyName2_Name2</code></strong>.<br />
-You can collaborate with your partner using the <code>git</code>
-environment; You can either make commits straight to the main
-repository, or create individual branches (recommended). However, once
-done, be sure to merge your branches to main - you will be graded using
-the most recent main version - your last push and merge before the
-deadline.<br />
-<strong>Please do not open/review other peoples’ repositories - we will
-be notified by GitHub if you do.</strong></p>
-<p>Your final push should include this Rmd file (with your answers
-filled-in), together with the html file that is outputted automatically
-by knitr when you knit the Rmd. Anything else will be disregarded. In
-addition, please adhere to the following file format:<br />
-<code>Lab_2_FamilyName1_Name1_and_FamilyName2_Name2.Rmd/html</code></p>
 <p><br /><br /> The only allowed libraries are the following
 (<strong>please do not add your own without consulting the course
 staff</strong>):</p>
 <p><br /><br /></p>
-</div>
 <div id="analysis-of-textual-data-and-the-wordle-game" class="section level2">
 <h2>Analysis of textual data and the <code>Wordle</code> game</h2>
 <p>In this lab we will analyze textual data from the web. We will
@@ -444,6 +421,12 @@ results for the rest of the values (for example, using the option
 Extract the text from the html as a long string, and print the first
 line of the text in the file (starting with
 <code>The Project Gutenberg ...</code>)</p>
+<pre class="r"><code>url &lt;- &#39;https://www.gutenberg.org/files/2701/2701-h/2701-h.htm&#39;
+# Read the html into r:
+html_str &lt;- toString(html_text(read_html(url)))
+as_string &lt;- gsub(&quot;\r\n&quot;, &quot; \n &quot;, substr(html_str , 911, nchar(html_str)))</code></pre>
+<pre class="r"><code>unlist(strsplit(as_string, &quot; \n &quot;))[1]</code></pre>
+<pre><code>## [1] &quot;The Project Gutenberg eBook of Moby-Dick; or The Whale, by Herman Melville&quot;</code></pre>
 <ol start="2" style="list-style-type: lower-alpha">
 <li>Split the text string into words, separated by spaces, commas
 (<code>,</code>), periods (<code>.</code>), and new line characters
@@ -453,8 +436,23 @@ What are the <code>median</code>, <code>mean</code>,
 <code>longest</code> and <code>most common</code> word lengths? <br>
 <strong>Note:</strong> some of the “words” you will get will still
 contain non-English characters (e.g. numbers, <code>-</code>,
-<code>;</code> or other characters). Don’t worry about it. We will parse
-the words further later when needed.</li>
+<code>;</code> or other charactsers). Don’t worry about it. We will
+parse the words further later when needed.</li>
+</ol>
+<pre class="r"><code>words &lt;- str_replace_all(as_string,&quot;[.,( \n )]&quot;, &quot; &quot;)
+words &lt;- unlist(strsplit(words, &quot; &quot;)[1])
+words &lt;- words[words!=&quot;&quot;]
+len_words &lt;- nchar(words)
+longest_words &lt;- words[which.max(len_words)]
+median_words &lt;- median(len_words)
+mean_words &lt;- mean(len_words)
+t_words &lt;- table(len_words)
+most_common &lt;- names(t_words[order(t_words, decreasing = T)][1])</code></pre>
+<p>longest words: <code>matches?—tinder?—gunpowder?—what</code></p>
+<p>median words: <code>4</code></p>
+<p>mean words: <code>4.5577799</code></p>
+<p>most common: <code>3</code></p>
+<ol start="3" style="list-style-type: lower-alpha">
 <li>Count the words frequencies in the text - i.e. the number of times
 each unique word appears in the text. Show the top 10 most frequent
 words with their frequencies. Is the list of top words surprising?

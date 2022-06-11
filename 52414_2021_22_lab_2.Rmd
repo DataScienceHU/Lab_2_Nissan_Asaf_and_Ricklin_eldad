@@ -57,29 +57,86 @@ html_str <- toString(html_text(read_html(url)))
 as_string <- gsub("\r\n", " \n ", substr(html_str , 911, nchar(html_str)))
 ```
 ```{r}
-strsplit(as_string, " \n ")[1]
+unlist(strsplit(as_string, " \n "))[1]
 ```
 b. Split the text string into words, separated by spaces, commas (`,`), periods (`.`), and new line characters (`\n` and `\r`). How many words are there? 
 Compute the distribution of lengths of words you got, and plot using a bar-plot. What are the `median`, `mean`, `longest` and `most common` word lengths? <br>
-**Note:** some of the "words" you will get will still contain non-English characters (e.g. numbers, `-`, `;` or other characters). Don't worry about it. We will parse the words further later when needed. 
+**Note:** some of the "words" you will get will still contain non-English characters (e.g. numbers, `-`, `;` or other charactsers). Don't worry about it. We will parse the words further later when needed. 
 ```{r}
-words <- str_replace_all(as_string,"[.,( \n )]", " ")
-words <- unlist(strsplit(words, " ")[1])
-words[words!=""]
+
+split_a <- function(a){ # a function that get function that gets string and give word list. 
+  a <- str_replace_all(a,"[ \n ]", " ")
+  a <- str_replace_all(a,"[^a-zA-Z ]", "") # refer to shortcut like "can't" as one word - cant.
+  a <- unlist(strsplit(a, " ")[1])
+ return(a[a!=""])
+}
+
+words <- split_a(as_string)
+len_words <- nchar(words)
+longest_words <- words[which.max(len_words)]
+median_words <- median(len_words)
+mean_words <- mean(len_words)
+t_len_words <- table(len_words)
+most_common <- names(t_len_words[order(t_len_words, decreasing = T)][1])
+
 ```
+longest words: ``r longest_words``
+
+median words: ``r median_words``
+
+mean words: ``r mean_words``
+
+most common: ``r most_common`` 
+
 c. Count the words frequencies in the text - i.e. the number of times each unique word appears in the text.
 Show the top 10 most frequent words with their frequencies. Is the list of top words surprising? explain. 
 
+```{r}
+t_words <- table(words)
+t_words[order(t_words, decreasing = T)][1:10]
+```
+not that surprising, really common-daily words.
 
 2.a. Split the book text into `chapters`, such that you obtain an array of strings, one per chapter. 
 Count and plot the number of words per each chapter (y-axis) vs. the chapter index (1,2,3.., on x-axis). 
 (each chapter is splitted to word in the same manner as in Qu. 1). <br>
 **Hint:** Chapters begin with the string `CHAPTER` followed by a space and then the chapter's number and a period. For example: `CHAPTER 2.` is at the start of chapter 2. But beware - this pattern by itself is not enough to identify correctly all chapters starts and end. You will need to *look at the text* in order to decide what patterns to look for when splitting the data into chapters. 
 
+```{r}
+begining <- str_locate_all( as_string,"CHAPTER 1. Loomings")[[1]][2,1]
+end <- str_locate_all( as_string,"only found another orphan.")[[1]][1,2]
+book <- str_sub(as_string, begining, end)
+book <- str_replace_all(book,"[.,( \n )]", " ")
+by_chepter <- str_split(book, "      CHAPTER (?=[:digit:])")[[1]]
+n_chepter <- length(by_chepter)
+word_n_by_chepter <- rep(0,n_chepter)
+for (i in 1:n_chepter){
+  word_n_by_chepter[i] <- length(split_a(by_chepter[i]))
+}
+
+word_n_by_chepter[1] - 1 # without the word "CHAPTER"
+split_a(by_chepter[4])
+#add plot vechi
+```
 b. Write a function that receives as input a query word, and an array of strings representing the chapters. The function returns a vector of the `relative frequencies` of the word in each chapter. That is, if for example the word `time` appears six times in the first chapter, and there are overall 
 $3247$ words in this chapter, then the first entry in the output vector of the function will be $6/3247 \approx 0.0018$. <br>
 Apply the function to the following words `Ahab`, `Moby`, `sea`. Plot for each one of them the trend, i.e. the frequency vs. chapter, with chapters in increasing orders. Do you see a different behavior for the different words? in which parts of the book are they frequent? 
 
+```{r}
+get_frq <- function(string_word, string_chapters){
+    chaps <- as.numeric(unlist(strsplit(string_chapters, ",")))
+    output <- rep(0,length(chaps))
+    for (i in 1:length(chaps)){
+      a <- table( split_a(by_chepter[chaps[i]]) )
+      if (string_word %in% names(a)){
+        output[i] <- as.numeric(a[names(a) == string_word]) / word_n_by_chepter[chaps[i]]
+        }
+    }
+output
+}
+
+get_frq('Ahab','1,16,2,3')
+```
 
 3.a. Suppose that Alice and Bob each choose independently and uniformly at random a single word from the book. That is, each of them chooses a random word instance from the book, taking into account that words have different frequencies (i.e. if for example the word `the` appears $1000$ times, and the word `Ishmael` appears only once, then it is $1000$-times more likely to choose the word `the` because each of its instances can be chosen). What is the probability that they will pick the same word? 
 Answer in two ways: <br>
