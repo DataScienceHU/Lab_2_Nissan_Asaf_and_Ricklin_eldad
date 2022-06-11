@@ -7,20 +7,7 @@ output: html_document
 
 
 # *Lab 2: Text analysis, Sampling and inference*  
-<br/><br/>  
-  
-### Submission Instructions  
-
-This lab will be submitted in pairs using GitHub (if you don't have a pair, please contact us).  
-Please follow the steps in the  [GitHub-Classroom Lab 2](https://classroom.github.com/a/F5YH9Lxr) to create your group's Lab 2 repository.  
-**Important: your team's name must be `FamilyName1_Name1_and_FamilyName2_Name2`**.  
-You can collaborate with your partner using the `git` environment; You can either make commits straight to the main repository, or create individual branches (recommended). 
-However, once done, be sure to merge your branches to main - you will be graded using the most recent main version - your last push and merge before the deadline.   
-**Please do not open/review other peoples' repositories - we will be notified by GitHub if you do.**
-
-Your final push should include this Rmd file (with your answers filled-in), together with the html file that is outputted automatically by knitr when you knit the Rmd. Anything else will be disregarded. In addition, please adhere to the following file format:    
-`Lab_2_FamilyName1_Name1_and_FamilyName2_Name2.Rmd/html`      
-
+    
 <br/><br/>
 The only allowed libraries are the following (**please do not add your own without consulting the course staff**):
 ```{r, include=FALSE}
@@ -63,9 +50,23 @@ take this into account. Specifically, the calculations should ignore the missing
 1.a. Load the complete `Moby dick`  book from the [Gutenberg project](https://www.gutenberg.org) into `R`. The book is available [here](https://www.gutenberg.org/files/2701/2701-h/2701-h.htm).
 Extract the text from the html as a long string, and print the first line of the text in the file (starting with `The Project Gutenberg ...`)
 
+```{r, cache = TRUE}
+url <- 'https://www.gutenberg.org/files/2701/2701-h/2701-h.htm'
+# Read the html into r:
+html_str <- toString(html_text(read_html(url)))
+as_string <- gsub("\r\n", " \n ", substr(html_str , 911, nchar(html_str)))
+```
+```{r}
+strsplit(as_string, " \n ")[1]
+```
 b. Split the text string into words, separated by spaces, commas (`,`), periods (`.`), and new line characters (`\n` and `\r`). How many words are there? 
 Compute the distribution of lengths of words you got, and plot using a bar-plot. What are the `median`, `mean`, `longest` and `most common` word lengths? <br>
 **Note:** some of the "words" you will get will still contain non-English characters (e.g. numbers, `-`, `;` or other characters). Don't worry about it. We will parse the words further later when needed. 
+```{r}
+words <- str_replace_all(as_string,"[.,( \n )]", " ")
+words <- unlist(strsplit(words, " ")[1])
+words[words!=""]
+```
 c. Count the words frequencies in the text - i.e. the number of times each unique word appears in the text.
 Show the top 10 most frequent words with their frequencies. Is the list of top words surprising? explain. 
 
