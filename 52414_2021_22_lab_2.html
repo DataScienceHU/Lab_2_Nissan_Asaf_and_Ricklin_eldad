@@ -439,18 +439,28 @@ contain non-English characters (e.g. numbers, <code>-</code>,
 <code>;</code> or other charactsers). Don’t worry about it. We will
 parse the words further later when needed.</li>
 </ol>
-<pre class="r"><code>words &lt;- str_replace_all(as_string,&quot;[.,( \n )]&quot;, &quot; &quot;)
-words &lt;- unlist(strsplit(words, &quot; &quot;)[1])
-words &lt;- words[words!=&quot;&quot;]
+<pre class="r"><code>delete_not_char &lt;- function(a){
+  a &lt;- str_replace_all(a,&quot;[ \n ]&quot;, &quot; &quot;)
+  a &lt;- str_replace_all(a,&quot;[^a-zA-Z ]&quot;, &quot;&quot;) # refer to shortcut like &quot;can&#39;t&quot;
+  a
+}
+
+split_a &lt;- function(a){ # a function that get function that gets string and give word list. 
+  a &lt;- delete_not_char(a)
+  a &lt;- unlist(strsplit(a, &quot; &quot;)[1])
+ return(a[a!=&quot;&quot;])
+}
+
+words &lt;- split_a(as_string)
 len_words &lt;- nchar(words)
 longest_words &lt;- words[which.max(len_words)]
 median_words &lt;- median(len_words)
 mean_words &lt;- mean(len_words)
-t_words &lt;- table(len_words)
-most_common &lt;- names(t_words[order(t_words, decreasing = T)][1])</code></pre>
-<p>longest words: <code>matches?—tinder?—gunpowder?—what</code></p>
+t_len_words &lt;- table(len_words)
+most_common &lt;- names(t_len_words[order(t_len_words, decreasing = T)][1])</code></pre>
+<p>longest words: <code>swayingscoyingsflutterings</code></p>
 <p>median words: <code>4</code></p>
-<p>mean words: <code>4.5577799</code></p>
+<p>mean words: <code>4.505027</code></p>
 <p>most common: <code>3</code></p>
 <ol start="3" style="list-style-type: lower-alpha">
 <li>Count the words frequencies in the text - i.e. the number of times
@@ -458,6 +468,12 @@ each unique word appears in the text. Show the top 10 most frequent
 words with their frequencies. Is the list of top words surprising?
 explain.</li>
 </ol>
+<pre class="r"><code>t_words &lt;- table(words)
+t_words[order(t_words, decreasing = T)][1:10]</code></pre>
+<pre><code>## words
+##   the    of   and    to     a    in  that   his    it     I 
+## 13887  6675  6076  4591  4556  3977  2890  2464  2104  1943</code></pre>
+<p>not that surprising, really common-daily words.</p>
 <p>2.a. Split the book text into <code>chapters</code>, such that you
 obtain an array of strings, one per chapter. Count and plot the number
 of words per each chapter (y-axis) vs. the chapter index (1,2,3.., on
@@ -469,6 +485,20 @@ chapter 2. But beware - this pattern by itself is not enough to identify
 correctly all chapters starts and end. You will need to <em>look at the
 text</em> in order to decide what patterns to look for when splitting
 the data into chapters.</p>
+<pre class="r"><code>begining &lt;- str_locate_all( as_string,&quot;CHAPTER 1. Loomings&quot;)[[1]][2,1]
+end &lt;- str_locate_all( as_string,&quot;only found another orphan.&quot;)[[1]][1,2]
+book &lt;- str_sub(as_string, begining, end)
+book &lt;- delete_not_char (book) # includ CHAPTER name
+by_chepter &lt;- str_split(book, &quot;      CHAPTER  &quot;)[[1]]
+n_chepter &lt;- length(by_chepter)
+word_n_by_chepter &lt;- rep(0,n_chepter)
+for (i in 1:n_chepter){
+  word_n_by_chepter[i] &lt;- length(split_a(by_chepter[i]))
+}
+
+word_n_by_chepter[1] - 1 # without the word &quot;CHAPTER&quot;</code></pre>
+<pre><code>## [1] 2191</code></pre>
+<pre class="r"><code>#add plot vechi</code></pre>
 <ol start="2" style="list-style-type: lower-alpha">
 <li>Write a function that receives as input a query word, and an array
 of strings representing the chapters. The function returns a vector of
@@ -482,6 +512,19 @@ frequency vs. chapter, with chapters in increasing orders. Do you see a
 different behavior for the different words? in which parts of the book
 are they frequent?</li>
 </ol>
+<pre class="r"><code>get_frq &lt;- function(string_word, by_chepter){
+    output &lt;- rep(0,length(by_chepter))
+    for (i in 1:length(by_chepter)){
+      a &lt;- table( split_a(by_chepter[i]) )
+      if (string_word %in% names(a)){
+        output[i] &lt;- as.numeric(a[names(a) == string_word]) / word_n_by_chepter[i]
+        }
+    }
+output
+}
+#get_frq(&#39;Ahab&#39;,by_chepter)
+#get_frq(&#39;Moby&#39;,by_chepter)
+#get_frq(&#39;sea&#39;,by_chepter)</code></pre>
 <p>3.a. Suppose that Alice and Bob each choose independently and
 uniformly at random a single word from the book. That is, each of them
 chooses a random word instance from the book, taking into account that
@@ -493,11 +536,25 @@ the word <code>the</code> because each of its instances can be chosen).
 What is the probability that they will pick the same word? Answer in two
 ways: <br> (i) Derive an exact formula for this probability as a
 function of the words relative frequencies, and compute the resulting
-value for the word frequencies you got for the book. <br> (ii) Simulate
-<span class="math inline">\(B=100,000\)</span> times the choice of Alice
-and Bob and use these simulations to estimate the probability that they
-chose the same word. <br> Explain your calculations in both ways and
-compare the results. Are they close to each other?</p>
+value for the word frequencies you got for the book. <br></p>
+<pre class="r"><code>relative_frequencies &lt;- sum(t_words^2)/(sum((t_words))^2)
+sum(relative_frequencies)</code></pre>
+<pre><code>## [1] 0.008768721</code></pre>
+<ol start="2" style="list-style-type: lower-roman">
+<li>Simulate <span class="math inline">\(B=100,000\)</span> times the
+choice of Alice and Bob and use these simulations to estimate the
+probability that they chose the same word. <br> Explain your
+calculations in both ways and compare the results. Are they close to
+each other?</li>
+</ol>
+<pre class="r"><code>book_vector &lt;- split_a(book)
+n_words &lt;- length(book_vector)
+indicator &lt;- 0
+a &lt;- sample(1:n_words, size = 100000)
+b &lt;- sample(1:n_words, size = 100000)
+c &lt;- as.numeric(book_vector[a] == book_vector[b])
+sum(c) / 100000</code></pre>
+<pre><code>## [1] 0.00878</code></pre>
 <ol start="2" style="list-style-type: lower-alpha">
 <li>Suppose that instead, we took all <strong>unique</strong> words that
 appear in the book, and then Alice and Bob would choose each
@@ -506,6 +563,19 @@ unique words. What would be the probability that they chose the same
 word in this case? is it lower, the same, or higher then the probability
 in (a.)? explain why.</li>
 </ol>
+<pre class="r"><code>t_words &lt;- table(book_vector )
+o_t_words &lt;- order(t_words, decreasing = T)
+not_unique &lt;- 1 / length(t_words)</code></pre>
+<p>not_unique, 4.7614513^{-5} is lower</p>
+<p>only by knowing first three frequencies sum:</p>
+<pre class="r"><code>sum((o_t_words[1:3]/length(t_words))) </code></pre>
+<pre><code>## [1] 1.489049</code></pre>
+<p><span class="math display">\[\begin{equation}
+P(not\ unique) =\frac{1}{n} \\
+&lt; \frac{1.1}{n}  = \frac{(1.4*n)^2}{n^2} &lt;
+\frac{\sum^{n}a_{[1:3]_{i}^2}}{n^2} &lt; \\ \frac{\sum^{n}
+(a_{i}^2)}{(\sum{a})^2} = P(unique)
+\end{equation}\]</span></p>
 <p>4.a. Extract from the book a list of all <code>five-letter</code>
 words. Keep only words that have only English letters. Convert all to
 lower-case. How many words are you left with? how many unique words?
