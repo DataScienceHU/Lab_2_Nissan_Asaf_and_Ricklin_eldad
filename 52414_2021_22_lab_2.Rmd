@@ -1,4 +1,4 @@
----
+--
 title: "52414 - lab 2 "
 author: "52414"
 date: "25/5/2022"
@@ -57,35 +57,34 @@ html_str <- toString(html_text(read_html(url)))
 as_string <- gsub("\r\n", " \n ", substr(html_str , 911, nchar(html_str)))
 ```
 ```{r}
-unlist(strsplit(as_string, " \n "))[1]
+unlist(strsplit(as_string, " \n "))[1] # extract the first line of the book.
 ```
 b. Split the text string into words, separated by spaces, commas (`,`), periods (`.`), and new line characters (`\n` and `\r`). How many words are there? 
 Compute the distribution of lengths of words you got, and plot using a bar-plot. What are the `median`, `mean`, `longest` and `most common` word lengths? <br>
 **Note:** some of the "words" you will get will still contain non-English characters (e.g. numbers, `-`, `;` or other charactsers). Don't worry about it. We will parse the words further later when needed. 
 ```{r}
-
-delete_not_char <- function(a, b=F){
+delete_not_char <- function(a, b=F){ # this function designed to delete all the non charter characters from the book.
   a <- str_replace_all(a,"[ \n ]", " ")
-  a <- str_replace_all(a,"[^a-zA-Z ]", "") # refer to shortcut like "can't"
+  a <- str_replace_all(a,"[^a-zA-Z ]", "") # refer to shortcut like "can't" to cant.
   if (b==T){a <- str_to_lower(a)}
   a
 }
 
-split_a <- function(a, b=F){ # a function that get function that gets string and give word list. 
+split_a <- function(a, b=F){ # a function that get function that gets string and give list of words. 
   a <- delete_not_char(a, b)
   a <- unlist(strsplit(a, " ")[1])
  return(a[a!=""])
 }
 
-words <- split_a(as_string)
-len_words <- nchar(words)
+words <- split_a(as_string) # apply function on strings to vector of words.
+len_words <- nchar(words) # creates a new vector with the length of each word.
 longest_words <- words[which.max(len_words)]
 median_words <- median(len_words)
 mean_words <- mean(len_words)
 t_len_words <- table(len_words)
 most_common <- names(t_len_words[order(t_len_words, decreasing = T)][1])
-
 ```
+
 longest words: ``r longest_words``
 
 median words: ``r median_words``
@@ -101,6 +100,7 @@ Show the top 10 most frequent words with their frequencies. Is the list of top w
 t_words <- table(words)
 t_words[order(t_words, decreasing = T)][1:10]
 ```
+
 not that surprising, really common-daily words.
 
 2.a. Split the book text into `chapters`, such that you obtain an array of strings, one per chapter. 
@@ -111,24 +111,27 @@ Count and plot the number of words per each chapter (y-axis) vs. the chapter ind
 ```{r}
 begining <- str_locate_all( as_string,"CHAPTER 1. Loomings")[[1]][2,1]
 end <- str_locate_all( as_string,"only found another orphan.")[[1]][1,2]
-book <- str_sub(as_string, begining, end)
-book <- delete_not_char (book) # includ CHAPTER name
+book <- str_sub(as_string, begining, end) # triming the book from start to end.
+book <- delete_not_char (book) # include CHAPTER name
 by_chepter <- str_split(book, "      CHAPTER  ")[[1]]
 n_chepter <- length(by_chepter)
 word_n_by_chepter <- rep(0,n_chepter)
 for (i in 1:n_chepter){
   word_n_by_chepter[i] <- length(split_a(by_chepter[i]))
 }
-
-word_n_by_chepter[1] - 1 # without the word "CHAPTER"
-#add plot vechi
+word_n_by_chepter[1] <- word_n_by_chepter[1] - 1 # without the word "CHAPTER".
+index <- 1:length(word_n_by_chepter)
+plot(index,word_n_by_chepter, col = "red",main = "numbers of words as function of the chapter's index", xlab = "chapter number",ylab = "numbers of words")
 ```
+
+  
+  
 b. Write a function that receives as input a query word, and an array of strings representing the chapters. The function returns a vector of the `relative frequencies` of the word in each chapter. That is, if for example the word `time` appears six times in the first chapter, and there are overall 
 $3247$ words in this chapter, then the first entry in the output vector of the function will be $6/3247 \approx 0.0018$. <br>
 Apply the function to the following words `Ahab`, `Moby`, `sea`. Plot for each one of them the trend, i.e. the frequency vs. chapter, with chapters in increasing orders. Do you see a different behavior for the different words? in which parts of the book are they frequent? 
 
 ```{r}
-get_frq <- function(string_word, by_chepter){
+get_frq <- function(string_word, by_chepter){ # create a function that yields relative frequencies.
     output <- rep(0,length(by_chepter))
     for (i in 1:length(by_chepter)){
       a <- table( split_a(by_chepter[i]) )
@@ -138,25 +141,32 @@ get_frq <- function(string_word, by_chepter){
     }
 output
 }
-#get_frq('Ahab',by_chepter)
-#get_frq('Moby',by_chepter)
-#get_frq('sea',by_chepter)
+plot(index,get_frq('Ahab',by_chepter),main = "relative frequencies of the word 'Ahab' by chapter", xlab = "chapter number",ylab = "relative frequencie")
+plot(index,get_frq('Moby',by_chepter),main = "relative frequencies of the word 'Moby' by chapter", xlab = "chapter number",ylab = "relative frequencie")
+plot(index,get_frq('sea',by_chepter),main = "relative frequencies of the word 'sea' by chapter", xlab = "chapter number",ylab = "relative frequencie")
 
 ```
+
+  
+we can observe that the words who describe characters has an unstable frequency (probably because the specific way of evolving plot), in compare of the word "sea" which is a meant to describe landscape.
 
 3.a. Suppose that Alice and Bob each choose independently and uniformly at random a single word from the book. That is, each of them chooses a random word instance from the book, taking into account that words have different frequencies (i.e. if for example the word `the` appears $1000$ times, and the word `Ishmael` appears only once, then it is $1000$-times more likely to choose the word `the` because each of its instances can be chosen). What is the probability that they will pick the same word? 
 Answer in two ways: <br>
 (i) Derive an exact formula for this probability as a function of the words relative frequencies, and compute the resulting value for the word frequencies you got for the book. <br>
 
+$P(get\ one\ word\ i) = \frac{x_{i}}{\sum{x_{i}}}$
+$P(get\ same\ word\ i) = (\frac{x_{i}}{\sum_{j}{x_{j}}})^2$
+$P(get\ same\ word) = \sum_{i}{ P(get\ one\ word\ i)}^2 = \sum_{i}{ (\frac{x_{i}}{\sum_{j}{x_{j}}})^2} = \frac{\sum_{i}{(x_{i}})^2}{(\sum_{j}{x_{j}})^2 }$
+
 ```{r}
-relative_frequencies <- sum(t_words^2)/(sum((t_words))^2)
-sum(relative_frequencies)
+sum(t_words^2)/(sum((t_words))^2) # apply of the formula above
 ```
 
 (ii) Simulate $B=100,000$ times the choice of Alice and Bob and use these simulations to estimate the probability that they chose the same word. <br>
 Explain your calculations in both ways and compare the results. Are they close to each other? 
 
 ```{r}
+# by monta-carlo method we sample n samples and check the percent of the equal samples. 
 book_vector <- split_a(book)
 n_words <- length(book_vector)
 indicator <- 0
@@ -165,25 +175,27 @@ b <- sample(1:n_words, size = 100000)
 c <- as.numeric(book_vector[a] == book_vector[b])
 sum(c) / 100000
 ```
+almost the same!
 
 b. Suppose that instead, we took all **unique** words that appear in the book, and then Alice and Bob would choose each independently and uniformly at random a single word from the list of unique words. What would be the probability that they chose the same word in this case? is it lower, the same, or higher then the probability in (a.)? explain why. 
 
 ```{r}
-t_words <- table(book_vector )
-o_t_words <- order(t_words, decreasing = T)
+t_words <- table(book_vector ) # using table to extract all the unique words.  
 not_unique <- 1 / length(t_words)
+# in the formula we sample one word out of n word twice and then sum that probability over all the n words which give us a 1/n probability. 
 ```
-not unique, when all word is value 1, `r not_unique ` is lower
+
+not unique, when all word is value 1, `r not_unique `, is lower
 
 only by knowing first sum of ratio:
-```{r} 
-sum((o_t_words[1:3]/length(t_words))) 
-```
 
-\begin{equation}
-P(not\ unique) =\frac{1}{n} \\
-< \frac{1.1}{n}  = \frac{(1.4*n)^2}{n^2} < \frac{\sum^{n}a_{[1:3]_{i}^2}}{n^2} < \\ \frac{\sum^{n} (a_{i}^2)}{(\sum{a})^2} = P(unique)
-\<end{equation}
+```{r} 
+o_t_words <- order(t_words, decreasing = T)
+sum((o_t_words[1:3]/length(t_words))^2) 
+```
+base on the calculation above we can prove that for this case:
+
+$ P(not\ unique) =\frac{1}{n}  < \frac{1.1}{n}  = \frac{(1.1*n)}{n^2} < \frac{\sum^{n}a_{[1:3]_{i}^2}}{n^2} <  \frac{\sum^{n} (a_{i}^2)}{(\sum{a})^2} = P(unique) $
 
 4.a. Extract from the book a list of all `five-letter` words. Keep only words that have only English letters. Convert all to lower-case. How many words are you left with? how many unique words? 
 Show the top 10 most frequent five-letter words with their frequencies.
@@ -191,21 +203,20 @@ Show the top 10 most frequent five-letter words with their frequencies.
 ```{r}
 book_vector_b <- split_a(book, b=T)
 only_5 <- book_vector_b[nchar(book_vector_b)==5]
-
 t_words_b <- table(only_5)
 o_t_b_words <- t_words_b[order(t_words_b, decreasing = T)][1:10]
-
-o_t_b_words 
-length(t_words_b)
-length(only_5)
+output_all <- length(t_words_b)
+output_5 <- length(only_5)
+o_t_b_words # the most frequented 5 letters words. 
 ```
+as we can see in the output there is `r output_5 ` words out of `r output_all`. 
 
 b. Compute letter frequencies statistics of the five-letter words: 
 That is, for each of the five locations in the word (first, second,..), how many times each of the English letters `a`, `b`,...,`z` appeared in your (non-unique) list of words. Store the result in a `26-by-5` table and show it as a heatmap. Which letter is most common in each location? Do you see a strong effect for the location? 
 
 ```{r}
 words_5b <- names(t_words_b)
-b4 <- function(words_5letters, heat = T){
+b4 <- function(words_5letters, heat = T){ # this function is meant to create a matrix of frequency of letters locations in the words of the book. 
 out_met <- matrix(data = rep(0, 26*5), nrow = 26, ncol = 5)
 for (i in 1:26){
   for (j in words_5letters){
@@ -214,16 +225,20 @@ for (i in 1:26){
   }
 }
 rownames(out_met) <- letters
-if(heat){
+if(heat){ # if heat map is wanted, return heatmap.
 out_heat <- heatmap(out_met,  Colv = NA, Rowv = NA,cexRow = 0.5,cexCol = 0.5, scale="column")
 return(list(out_met,out_heat))} 
 return(out_met)
 }
-
 b4_a <- b4(words_5b)
 five_matrix <- b4_a[[1]]
+output_s <- which(five_matrix==max(five_matrix),arr.ind=T)
+output_s
 ```
 
+the letter with the highest appearances is 's' in the '5' place in word. 
+we can see that for certain letters there is a storng effect of the place in the word.
+we should expect that effect because it makes sense from the language prepective: for example, we know that the letter s in the last place in a word is used in english to show plural.  
 
 
 c. Consider the following random model for typing words: we have a `26-by-5` table of probabilities $p_{ij}$ for i from $1$ to $5$, 
@@ -236,19 +251,30 @@ Write a function that receives a `26-by-5` table of probabilities and an array o
 Run the function to compute the likelihood of all unique five-letter words from the book, with the frequency table you computed in 4.b. normalized to probabilities. Show the top-10 words with the highest likelihood. 
 
 ```{r}
-table_prob <- function(tble, arr){
-  prob <- tble/sum(tble)
+
+table_prob_a <- function(tble){ # takes frequencies table to column-probebility table
+  weight <- (sum(tble[,1])) ^ (-1) # the 1/sum of each coulmn.
+  return(tble*weight)
+}
+
+table_prob_b <- function(tble, arr){ # takes probablity table and word array return likelyhood of each word
   g <- rep(0,length(arr))
   for (j in 1:length(g)){
     a = 1
     word_a <- strsplit(arr[j],'')[[1]]
   for (i in 1:length(word_a)){
-    a <- a * prob[c(word_a[i]),i]
+    a <- a * tble[c(word_a[i]),i]
   }
   g[j] <- a
   }
   return(arr[order(g, decreasing = T)])
 }
+
+
+table_prob <- function(tble, arr){ #united
+  return(table_prob_b(table_prob_a(tble),arr))
+         }
+  
 table_prob(five_matrix,names(t_words_b))[1:10]
 ```
 
@@ -262,17 +288,23 @@ We supply to you a function called `wordle_match`, that receives as input a gues
 
 **Note:** It is allowed for both the unknown word and the guess word to contain the same letter twice or more. In that case, we treat each letter in the guess as a `wrong` match if the same letter appears elsewhere in the unknown word. This is a bit different from the rules of the `wordle` game and is used for simplification here. 
 
-```{r}
-match_words <- function(guess,tru){
-  tru <- strsplit(tru,'')[[1]]
-  guess <- strsplit(guess,'')[[1]]
-  output <- rep(0,5)
-  for (i in 1:5){
-    if (tru[i] == guess[i]){ output[i] <- 1 } 
-    else if (guess[i] %in% tru) { output[i] <- -1 }
+```{r, cache=TRUE}
+# Helper function: 
+match_words <- function(guess, word)  # 1: correct location, -1: wrong location, 0: missing
+{
+  L <- nchar(guess)
+  match <- rep(0, L)
+  for(i in 1:L)
+  {
+    if(grepl(substr(guess, i, i), word, fixed=TRUE))
+      {match[i] = -1}
+    if(substr(guess, i, i) == substr(word, i, i))
+    {      match[i] = 1}
   }
-  return(output)
+  
+  return(match)
 }
+
 match_words("maple", "syrup")
 ```
 
@@ -281,23 +313,24 @@ Compute and display the `26-by-5` table of frequencies for this word list, in si
 Do you see major differences between the two tables? why? 
 
 ```{r}
-wordling <- paste(readLines("C:/Users/asafm/OneDrive/docs/2122B/Ranal/sgb-words.txt"))
+wordling <- paste(readLines("C:/Users/eldad/Downloads/sgb-words.txt"))
 b4(wordling)
 ```
+we do not see a major diffrences between the tables. that because the most common letters are the one that corralated with english language as explained before fo the letter 's'. 
+
 b. Write a function that receives an array of guess words, an array of their corresponding matches to the unknown word (i.e. a two-dimensional array), and a `disctionary` - i.e. an array of legal English words. 
 The function should return all the words in the dictionary that are consistent with the results of the previous guesses. For example, if we guessed `maple` and our match was the array `[1, 0, -1, 0, 0]`, then we should keep only words that start with an `m`, have a `p` at a location different from $3$, and don't have `a`, `l` and `e`.
 When we have multiple guesses, our list of consistent words should be consistent with all of them, hence as we add more guesses, the list of consistent words will become shorter and shorter. <br>
 Run your function on the list of words from (a.), and with the guesses `c("south", "north")` and their corresponding matches: `c(-1, 1, 1, 0, 0)` and `c(0, 1, 0, 0, 0)`. Output the list of consistent words with these two guesses. 
 
 ```{r}
-
 b5 <- function(array_guess , array_matches, disctionary){
-    # takes array and gstr_locate_all('aba', 'a')[[1]][,1]ame-responds and dedact posible words in a certain dictionary
-  certain <- rep('.', 5) # in the place
-  nothing <- c() # not in any place
-  certain_not <- rep('.',5) # not in specific place
+    # takes array of guess results and responds and detcet possible words in a certain dictionary
+  certain <- rep('.', 5) # must be in the place.
+  nothing <- c() # not in any place.
+  certain_not <- rep('.',5) # not in specific place.
   total <- c() # all possible words
-  for (i in 1:5){
+  for (i in 1:5){ # add to the vectors the data from the guess's results.  
     col = array_matches[,i]
     w <- which(0 == col)
     if (length(w) != 0){
@@ -310,23 +343,30 @@ b5 <- function(array_guess , array_matches, disctionary){
     else if (length(w) != 0){
       certain_not[i] <- paste('[^(',paste(unique(str_sub(array_guess[w],i,i)),collapse = '|'),')]')}
   }
-  correct = sum(as.numeric(certain != '.'))
-  if (length (total) != 0){
-    total = total[!total %in% certain[certain != '.']]
-    total_n = length(total)}
-    output <- c()
-
-  if (correct == 5){return(output)}
-  for (i in c(1:5)[certain == '.']){ 
+  
+  correct = sum(as.numeric(certain != '.')) # check how much certain letters
+  output <- c()
+  for (i in c(1:5)[certain == '.']){ # paste to regex 
     if (certain_not[i] != '.'){certain[i] <- certain_not[i]}}
+  
   certain <- paste(certain, collapse = '' )
-  for (i in disctionary ) {
-    if (length(str_which( i ,nothing)) == 0){ output <- append(output, i)}
-  } # all contain miss cannot be the answer
-  output <- output[str_detect(output,certain)]
+    if (correct == 5){return(certain)} # if 5 certain letters it's correct
+
+  if (length (total) != 0){
+    total = total[!total %in% certain[certain != '.']] 
+    total_n = length(total)} # all letters that are in word, and missed
+    
+   
+  if (length(nothing)!=0)
+    {for (i in disctionary ) { # if in the conditions add output
+      if (length(str_which( i ,nothing)) == 0){ output <- append(output, i)}
+    }} # compare to see if a certain words can match the result we have. 
+  else
+  {output<- disctionary} 
+  output <- output[str_detect(output,certain)] # if in the regex conditions delet from output
   if (length (total) != 0){
   for (i in output){
-    if(length(str_which(i,total)) < total_n){ output <-output[output!=i]}
+    if(length(str_which(i,total)) < total_n){ output <-output[output!=i]} # chack if all misses letters are in each word in output
   }
   }
   return(output)
@@ -334,8 +374,6 @@ b5 <- function(array_guess , array_matches, disctionary){
 a_g = c("south", "north")
 a_m = matrix(c(-1, 1, 1, 0, 0, 0, 1, 0, 0, 0),nrow = 2,byrow = T)
 b5(a_g,a_m,wordling)
-
-#validate!!!
 ```
 
 6.a. Consider the following (rather naive) guessing strategy, called **strategy 1:** <br>
@@ -348,13 +386,13 @@ Implement a function that receives as input the unknown word, and implements thi
 Run the function when the unknown word is "mouse", and show the results. 
 
 ```{r}
-a6 <- function(word_true, p = T){ #implament strtegy, can by without printing as p = F
-  guess <- sample(letters, 5, replace = T)
+a6 <- function(word_true, p = T){ # this function designed to implement the strategy above. the function has a printing argument p.
+  guess <- sample(letters, 5, replace = T) # sample letters (uniform distribution) to form a guess. 
   guess <- paste(guess, collapse = "")
   response <- match_words(word_true, guess)
   times <- 1
   guesses <- c(guess)
-  while(!all(response == c(1,1,1,1,1))) {
+  while(!all(response == c(1,1,1,1,1))) { # keep the process until perfect match.  
     guess <- strsplit(guess,'')[[1]]
     guess[response != 1] <- sample(letters, length(guess[response != 1]), replace = T)
     guess <- paste(guess, collapse = "")
@@ -374,7 +412,9 @@ b. Write a mathematical formula for the distribution of the number of turns need
 **Hint:** The geometric distribution plays a role here. It is easier to compute the cumulative distribution function.  
 Use this formula to compute the expected number of turns for this strategy.
 
-$P(n) = \sum_{1=i}^{5}\binom{n}{i}(1-p)^{ni}(p)^i(1-(1-p)^n)^{5-i}$
+$P(n) = \sum_{1=i}^{5}\binom{n}{i}(P(letter\ i\ correct\ in\ attempt\ n))^i(P(letter\ i\ correct\ before\ attempt\ n)^{5-i}$
+$\sum_{1=i}^{5}\binom{n}{i}((1-p)^{n}(p))^i(1-(1-p)^n)^{5-i}$
+$= \sum_{1=i}^{5}\binom{n}{i}(1-p)^{ni}(p)^i(1-(1-p)^n)^{5-i}$
 sum any combination of after n times, the last are geom in n, and the other are geom before n.
 
 <br>
@@ -393,8 +433,6 @@ n_mc <- rep(0,100) # in monte carlo method
 for (i in 1:100){
   n_mc[i] <- a6(sample_words[i], p = F)[[1]]
 }
-plot(ecdf(n_mc))
-
 p <- 1 / 26
 p_dt <- rep(0,10000) # probability deterministic 
 cdf_dt <- rep(0,10000)
@@ -407,14 +445,20 @@ for (n in 1:10000){
   cdf_p <- cdf_p + p1
   cdf_dt[n] <- cdf_p
 }
-plot(1:10000, cdf_dt)
-plot(1:200, cdf_dt[1:200])
 
-plot(ecdf(n_mc))
+expectaion_sim <- mean(cdf_dt) # calculate empirical expectation 
+expectaion_teo<- mean(n_mc)
+
+plot(1:10000, cdf_dt,main = "theoretical cdf as function of number of turns",ylab = "probability",
+     xlab = "turns"  )
+plot(1:200, cdf_dt[1:200],main = "theoretical cdf as function of number of average turns",ylab ="probability",xlab = "turns")
+plot(ecdf(n_mc),main = "cdf in compare of the theoretical cdf",ylab ="probability",
+     xlab = "turns")
 lines(1:200, cdf_dt[1:200], type = "l")
-
 ```
 
+empirical expectation in theoretical ` r expectaion_teo`,the expectation computed from simulation is ` r expectaion_sim`, the difference is ` r expectaion_teo - expectaion_sim`
+ 
 7.a. Implement the following two additional strategies for guessing the word: 
 
 **Strategy 2:** 
@@ -423,7 +467,7 @@ lines(1:200, cdf_dt[1:200], type = "l")
 
 
 ```{r}
-st2 <- function(words , word_true){
+st2 <- function(words , word_true){ # a function designed to imlement the strategy from the question.
   guess <- table_prob(b4(words,F),words)[1] # take the most MLE
   times <- 1
   guesses <- c(guess)
@@ -442,7 +486,6 @@ st2 <- function(words , word_true){
   return(output) 
 }
 st2( words = wordling,word_true ="vizor")
-
 ```
 
 **Strategy 3:** 
@@ -453,7 +496,7 @@ Run both strategies with the unknown word "mouse", and show the guesses and the 
 
 
 ```{r}
-st3 <- function(words , word_true){
+st3 <- function(words , word_true){ # a function designed to implement the strategy from the question. 
   guess <- sample(words,1) # take random
   times <- 1
   guesses <- c(guess)
@@ -473,8 +516,6 @@ st3 <- function(words , word_true){
 }
 st3( words = wordling,word_true ="mouse")
 st2( words = wordling,word_true ="mouse")
-
-
 ```
 b. Run $B = 100$ simulations of the games, in similar to Qu. 6.c. 
 That is, each time, sample a random unknown word,  run the two strategies $2$ and $3$, and record the number of turns needed to solve `wordle` for both of them. 
@@ -482,17 +523,23 @@ That is, each time, sample a random unknown word,  run the two strategies $2$ an
 ```{r}
 n_st2 <- rep(0,100)
 n_st3 <- rep(0,100)
-
 sample_words <- sample(wordling,100)
-
-for (i in 1:100){
-  n_st3[i] <- st3( words = wordling,word_true = sample_words[i])[[1]]
-  n_st2[i] <- st2( words = wordling,word_true = sample_words[i])[[1]]
+sample_words
+for (i in 1:100){ # use the loop to acticate the strategies on n_st2 and n_st3.
+  n_st3[i] <- st3(words = wordling,word_true = sample_words[i])[[1]]
+  n_st2[i] <- st2(words = wordling,word_true = sample_words[i])[[1]]
 }
-
-plot(ecdf(n_st3))
+plot(ecdf(n_st3),col='blue',main = "cdf for strategies 2,3:",ylab = "probability",xlab="number of turns")
 lines(ecdf(n_st2),col = 'red')
+legend(1, 95, legend=c("Strategy 3", "Strategy 3"),
+       col=c("blue", "red"), lty=1:2, cex=0.8)
+
+expectaion_3 <- mean(n_st3) # calculate empirical expectation 
+expectaion_2<- mean(n_st2)
+
+
 ```
+empirical expectation in 2 ` r expectaion_2`,the expectation computed from 3 is ` r expectaion_2`, the difference is ` r expectaion_2 - expectaion_3` 2 is better. but really close.
 
 - Plot the empirical CDFs of the number of guesses. How similar are they to each other? how similar are they to the CDF of strategy 1? What are the empirical means for both strategies?  
 
@@ -500,29 +547,39 @@ lines(ecdf(n_st2),col = 'red')
 c. (Bonus**) Can you design a better guessing strategy? 
 Design and implement a different guessing strategy, run it on $B=100$ random simulations, show the empirical CDF and compute the empirical mean. Your strategy is considered `better` if it shows a significant reduction in the mean number of turns compared to the previous strategies (you should think how to show that the difference is significant)
 
-
-**Solution:**  
-
-[INSERT YOUR TEXT, CODE, PLOTS AND TABLE HERE, SEPERATED INTO SUB-QUESTIONS]
-
-
-```{r, cache=TRUE}
-# Helper function: 
-wordle_match <- function(guess, word)  # 1: correct location, -1: wrong location, 0: missing
-{
-  L <- nchar(guess)
-  match <- rep(0, L)
-  for(i in 1:L)
-  {
-    if(grepl(substr(guess, i, i), word, fixed=TRUE))
-      {match[i] = -1}
-    if(substr(guess, i, i) == substr(word, i, i))
-    {      match[i] = 1}
-  }
-  
-  return(match)
+```{r}
+st4 <- function(words , word_true){ # a function designed to imlement the strategy from the question.
+  guess <- 'audio' # take word with many vowels
+  times <- 1
+  guesses <- c(guess)
+  response <- match_words(guess, word_true)
+  mat_st2 <- matrix(response, nrow = 1) # add to game's response matrix
+    while(!all(response == c(1,1,1,1,1))) {
+      if (is.null(guess)){ return('invalid word')} # check whether there's possible words
+      words <- b5(guesses,mat_st2,words) # consistant
+      guess <- table_prob(b4(words,F),words)[1] # take the most MLE 
+      response <- match_words(guess, word_true)
+      mat_st2 <- rbind(mat_st2,response) # add to game's response matrix
+      guesses <- append(guesses, guess)
+      times <- times + 1 
+}
+  output <- list(times, guesses)
+  return(output) 
+}
+n_st4 <- rep(0,100)
+sample_words <- sample(wordling,100)
+for (i in 1:100){ # use the loop to acticate the strategies on n_st2 and n_st3.
+  n_st4[i] <- st4(words = wordling,word_true = sample_words[i])[[1]]
 }
 
+
+plot(ecdf(n_st3),col='blue', main = "cdf for strategies 2,3:",ylab = "probability",xlab="number of turns")
+lines(ecdf(n_st4),col = 'red')
+legend(1, 95, legend=c("Strategy 3", "Strategy 3"),
+       col=c("blue", "red"), lty=1:2, cex=0.8)
+
+expectaion_4 <- mean(n_st4) # calculate empirical expectation 
+expectaion_4
 ```
 
-
+the expection in this function is better than the other strategies so it is a better one. 
