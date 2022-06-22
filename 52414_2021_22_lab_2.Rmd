@@ -531,7 +531,7 @@ for (i in 1:100){ # use the loop to acticate the strategies on n_st2 and n_st3.
 }
 plot(ecdf(n_st3),col='blue',main = "cdf for strategies 2,3:",ylab = "probability",xlab="number of turns")
 lines(ecdf(n_st2),col = 'red')
-legend(1, 95, legend=c("Strategy 3", "Strategy 3"),
+legend("topleft",legend=c("Strategy 3", "Strategy 3"),
        col=c("blue", "red"), lty=1:2, cex=0.8)
 
 expectaion_3 <- mean(n_st3) # calculate empirical expectation 
@@ -575,7 +575,7 @@ for (i in 1:100){ # use the loop to acticate the strategies on n_st2 and n_st3.
 
 plot(ecdf(n_st3),col='blue', main = "cdf for strategies 2,3:",ylab = "probability",xlab="number of turns")
 lines(ecdf(n_st4),col = 'red')
-legend(1, 95, legend=c("Strategy 3", "Strategy 3"),
+legend(2, 4, legend=c("Strategy 3", "Strategy 3"),
        col=c("blue", "red"), lty=1:2, cex=0.8)
 
 expectaion_4 <- mean(n_st4) # calculate empirical expectation 
@@ -583,3 +583,5 @@ expectaion_4
 ```
 
 the expection in this function is better than the other strategies so it is a better one. 
+
+
